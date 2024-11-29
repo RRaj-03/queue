@@ -1,101 +1,206 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import { useState, useEffect } from "react";
+import activeDoctors from "@/data/activeDoctors"; // Adjust path based on your structure
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+export default function AppointmentPage() {
+	const [formData, setFormData] = useState({
+		name: "",
+		email: "",
+		doctor: "",
+	});
+	const [appointments, setAppointments] = useState<
+		{ id: number; name: String; email: string; doctor: string }[]
+	>([]);
+	const [doctorSummary, setDoctorSummary] = useState<{
+		[doctorName: string]: number;
+	}>({});
+	const [appointmentNumber, setAppointmentNumber] = useState(0);
+	const [appointmentDoctor, setAppointmentDoctor] = useState<string | null>(
+		null
+	);
+	useEffect(() => {
+		fetchAppointments();
+	}, []);
+
+	const fetchAppointments = async () => {
+		try {
+			const res = await fetch("/api/appointments", { method: "GET" });
+			const data = await res.json();
+			setAppointments(data);
+			updateDoctorSummary(data);
+		} catch (error) {
+			console.error("Error fetching appointments:", error);
+		}
+	};
+
+	const handleChange = (e: any) => {
+		setFormData({ ...formData, [e.target.name]: e.target.value });
+	};
+
+	const handleSubmit = async (e: any) => {
+		e.preventDefault();
+
+		if (!formData.doctor) {
+			alert("Please select a doctor.");
+			return;
+		}
+
+		try {
+			const res = await fetch("/api/appointments", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(formData),
+			});
+
+			if (!res.ok) {
+				const error = await res.json();
+				alert(error.error || "Failed to book appointment.");
+				return;
+			}
+
+			const newAppointment = await res.json();
+			const updatedAppointments = [...appointments, newAppointment];
+			setAppointments(updatedAppointments);
+			updateDoctorSummary(updatedAppointments);
+			setAppointmentDoctor(formData.doctor);
+			setAppointmentNumber(
+				updatedAppointments.filter(
+					(appointment) => appointment.doctor === formData.doctor
+				).length
+			);
+
+			setFormData({ name: "", email: "", doctor: "" });
+		} catch (error) {
+			console.error("Error booking appointment:", error);
+		}
+	};
+
+	const updateDoctorSummary = (appointmentsList: any[]) => {
+		const summary = activeDoctors.reduce(
+			(acc: { [doctorName: string]: number }, doctor) => {
+				acc[doctor.name] = appointmentsList.filter(
+					(appt) => appt.doctor === doctor.name
+				).length;
+				return acc;
+			},
+			{}
+		);
+		setDoctorSummary(summary);
+	};
+
+	return (
+		<div className="min-h-screen bg-slate-800 flex flex-col">
+			{/* Header */}
+			<header className="bg-white text-black flex justify-center items-center px-8 py-2 shadow-md">
+				<h1 className="text-xl font-bold">BC Roy Aspatal</h1>
+			</header>
+			{Boolean(appointmentNumber) && appointmentDoctor && (
+				<div className="bg-green-500 text-black flex justify-center items-center px-8 py-2 shadow-md">
+					<span className="text-xl font-bold">
+						Your Appointment Token is {appointmentNumber} for{" "}
+						{appointmentDoctor}
+					</span>
+				</div>
+			)}
+
+			{/* Main Content */}
+			<div className=" items-start justify-between h-full p-6">
+				{/* Appointment Form */}
+				<div className="min-h-screen flex justify-center items-center">
+					<div className="bg-slate-600 shadow-md rounded px-8 py-6 w-full md:w-1/2 lg:w-1/3">
+						<h2 className="text-white text-2xl font-bold text-center mb-4">
+							Book a Doctor's Appointment
+						</h2>
+						<form onSubmit={handleSubmit} className="space-y-4">
+							<div>
+								<label
+									htmlFor="name"
+									className="block text-sm font-medium text-gray-300"
+								>
+									Full Name
+								</label>
+								<input
+									type="text"
+									name="name"
+									id="name"
+									value={formData.name}
+									onChange={handleChange}
+									required
+									className="mt-1 block w-full px-3 py-2 bg-slate-500 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+								/>
+							</div>
+							<div>
+								<label
+									htmlFor="email"
+									className="block text-sm font-medium text-gray-300"
+								>
+									Email Address
+								</label>
+								<input
+									type="email"
+									name="email"
+									id="email"
+									value={formData.email}
+									onChange={handleChange}
+									required
+									className="mt-1 block w-full px-3 py-2 bg-slate-500 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+								/>
+							</div>
+							<div>
+								<label
+									htmlFor="doctor"
+									className="block text-sm font-medium text-gray-300"
+								>
+									Select Doctor
+								</label>
+								<select
+									name="doctor"
+									id="doctor"
+									value={formData.doctor}
+									onChange={handleChange}
+									required
+									className="mt-1 block w-full px-3 py-2 bg-slate-500 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+								>
+									<option value="" disabled>
+										Choose a doctor
+									</option>
+									{activeDoctors.map((doctor) => (
+										<option key={doctor.id} value={doctor.name}>
+											{doctor.name}
+										</option>
+									))}
+								</select>
+							</div>
+							<button
+								type="submit"
+								className="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700"
+							>
+								Book Appointment
+							</button>
+						</form>
+					</div>
+				</div>
+				{/* Doctor Summary */}
+				<div className="w-full md:w-1/2 lg:w-1/3 mt-8 md:mt-0 m-auto">
+					<h2 className="text-white text-2xl font-bold mb-4 text-center">
+						Doctor's Appointment Summary
+					</h2>
+					<div className="bg-slate-600 p-4 rounded shadow-md">
+						{activeDoctors.map((doctor) => (
+							<div
+								key={doctor.id}
+								className="flex items-center justify-between text-white mb-2"
+							>
+								<span className="font-semibold">{doctor.name}</span>
+								<span className="text-indigo-400">
+									{doctorSummary[doctor.name] || 0} Appointments
+								</span>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
