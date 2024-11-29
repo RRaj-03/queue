@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import activeDoctors from "@/data/activeDoctors"; // Adjust path based on your structure
+import Image from "next/image";
+import Link from "next/link";
 
 export default function AppointmentPage() {
 	const [formData, setFormData] = useState({
@@ -92,8 +94,14 @@ export default function AppointmentPage() {
 	return (
 		<div className="min-h-screen bg-slate-800 flex flex-col">
 			{/* Header */}
-			<header className="bg-white text-black flex justify-center items-center px-8 py-2 shadow-md">
-				<h1 className="text-xl font-bold">BC Roy Aspatal</h1>
+			<header className="bg-white text-black flex justify-between items-center px-8 py-2 shadow-md">
+				<Image src={"/image.png"} width={50} height={50} alt="" />{" "}
+				<h1 className="text-xl font-bold"> BC Roy Hospital | Imedix</h1>
+				<Link href={"/admin"}>
+					<div className="bg-red-500 rounded px-4 py-1 font-sans font-bold text-white hover:bg-red-700">
+						Login
+					</div>
+				</Link>
 			</header>
 			{Boolean(appointmentNumber) && appointmentDoctor && (
 				<div className="bg-green-500 text-black flex justify-center items-center px-8 py-2 shadow-md">
