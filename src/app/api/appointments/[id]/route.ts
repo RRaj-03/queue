@@ -1,18 +1,18 @@
 import db from "@/lib/db";
+import { NextRequest } from "next/server";
 
 export async function DELETE(
-	request: Request,
+	request: NextRequest,
 	{
 		params,
 	}: {
-		params: {
+		params: Promise<{
 			id: string;
-		};
+		}>;
 	}
 ) {
 	try {
-		const { id } = params;
-
+		const id = (await params).id;
 		if (!id) {
 			return new Response(JSON.stringify({ error: "Missing appointment ID" }), {
 				status: 400,
