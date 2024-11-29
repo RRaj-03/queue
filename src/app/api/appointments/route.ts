@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { ResultSetHeader } from "mysql2";
 
 export async function GET(request: Request) {
 	try {
@@ -24,11 +25,10 @@ export async function POST(request: Request) {
 			});
 		}
 
-		const [result] = await db.query(
+		const [result] = await db.query<ResultSetHeader>(
 			"INSERT INTO appointments (name, email, doctor) VALUES (?, ?, ?)",
 			[name, email, doctor]
 		);
-		console.log("result", result);
 		return new Response(
 			JSON.stringify({ id: result.insertId, name, email, doctor }),
 			{ status: 201 }

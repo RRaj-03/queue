@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { ResultSetHeader } from "mysql2";
 import { NextRequest } from "next/server";
 
 export async function DELETE(
@@ -19,9 +20,10 @@ export async function DELETE(
 			});
 		}
 
-		const [result] = await db.query("DELETE FROM appointments WHERE id = ?", [
-			id,
-		]);
+		const [result] = await db.query<ResultSetHeader>(
+			"DELETE FROM appointments WHERE id = ?",
+			[id]
+		);
 		console.log("result", result);
 
 		if (result.affectedRows === 0) {

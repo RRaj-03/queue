@@ -19,7 +19,8 @@ export default function AdminDashboard() {
 
 					const data = await response.json();
 					const doctorPatients = data.filter(
-						(appointment) => appointment.doctor === selectedDoctor
+						(appointment: { doctor: string }) =>
+							appointment.doctor === selectedDoctor
 					);
 					setPatients(doctorPatients);
 				} catch (error) {
@@ -34,7 +35,7 @@ export default function AdminDashboard() {
 	}, [selectedDoctor]);
 
 	// Remove a patient
-	const handleRemovePatient = async (id) => {
+	const handleRemovePatient = async (id: string) => {
 		try {
 			const response = await fetch(`/api/appointments/${id}`, {
 				method: "DELETE",
@@ -46,7 +47,7 @@ export default function AdminDashboard() {
 
 			// Remove patient from the UI
 			setPatients((prevPatients) =>
-				prevPatients.filter((patient) => patient.id !== id)
+				prevPatients.filter((patient: { id: string }) => patient.id !== id)
 			);
 			alert("Patient removed successfully!");
 		} catch (error) {
@@ -109,20 +110,26 @@ export default function AdminDashboard() {
 										</tr>
 									</thead>
 									<tbody>
-										{patients.map((patient) => (
-											<tr key={patient.id} className="border-b text-black">
-												<td className="py-3 px-4">{patient.name}</td>
-												<td className="py-3 px-4">{patient.email}</td>
-												<td className="py-3 px-4">
-													<button
-														onClick={() => handleRemovePatient(patient.id)}
-														className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-													>
-														Remove
-													</button>
-												</td>
-											</tr>
-										))}
+										{patients.map(
+											(patient: {
+												id: string;
+												name: string;
+												email: string;
+											}) => (
+												<tr key={patient.id} className="border-b text-black">
+													<td className="py-3 px-4">{patient.name}</td>
+													<td className="py-3 px-4">{patient.email}</td>
+													<td className="py-3 px-4">
+														<button
+															onClick={() => handleRemovePatient(patient.id)}
+															className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+														>
+															Remove
+														</button>
+													</td>
+												</tr>
+											)
+										)}
 									</tbody>
 								</table>
 							</div>

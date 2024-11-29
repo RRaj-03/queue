@@ -9,8 +9,12 @@ export default function AppointmentPage() {
 		email: "",
 		doctor: "",
 	});
-	const [appointments, setAppointments] = useState([]);
-	const [doctorSummary, setDoctorSummary] = useState({});
+	const [appointments, setAppointments] = useState<
+		{ id: number; name: String; email: string; doctor: string }[]
+	>([]);
+	const [doctorSummary, setDoctorSummary] = useState<{
+		[doctorName: string]: number;
+	}>({});
 	const [appointmentNumber, setAppointmentNumber] = useState(0);
 	const [appointmentDoctor, setAppointmentDoctor] = useState<string | null>(
 		null
@@ -30,11 +34,11 @@ export default function AppointmentPage() {
 		}
 	};
 
-	const handleChange = (e) => {
+	const handleChange = (e: any) => {
 		setFormData({ ...formData, [e.target.name]: e.target.value });
 	};
 
-	const handleSubmit = async (e) => {
+	const handleSubmit = async (e: any) => {
 		e.preventDefault();
 
 		if (!formData.doctor) {
@@ -72,32 +76,16 @@ export default function AppointmentPage() {
 		}
 	};
 
-	const handleDelete = async (id) => {
-		try {
-			const res = await fetch(`/api/appointments/${id}`, { method: "DELETE" });
-
-			if (!res.ok) {
-				const error = await res.json();
-				alert(error.error || "Failed to delete appointment.");
-				return;
-			}
-
-			const updatedAppointments = appointments.filter((appt) => appt.id !== id);
-			setAppointments(updatedAppointments);
-			updateDoctorSummary(updatedAppointments);
-			alert("Appointment deleted successfully!");
-		} catch (error) {
-			console.error("Error deleting appointment:", error);
-		}
-	};
-
-	const updateDoctorSummary = (appointmentsList) => {
-		const summary = activeDoctors.reduce((acc, doctor) => {
-			acc[doctor.name] = appointmentsList.filter(
-				(appt) => appt.doctor === doctor.name
-			).length;
-			return acc;
-		}, {});
+	const updateDoctorSummary = (appointmentsList: any[]) => {
+		const summary = activeDoctors.reduce(
+			(acc: { [doctorName: string]: number }, doctor) => {
+				acc[doctor.name] = appointmentsList.filter(
+					(appt) => appt.doctor === doctor.name
+				).length;
+				return acc;
+			},
+			{}
+		);
 		setDoctorSummary(summary);
 	};
 
